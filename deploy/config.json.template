@@ -1,0 +1,115 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Ylianst/MeshCentral/master/meshcentral-config-schema.json",
+  "_comment": "DFW MSP MeshCentral Production Configuration Template",
+  "_instructions": "Copy to config.json and replace placeholders with actual values from .env",
+  "settings": {
+    "cert": "MESHCENTRAL_HOSTNAME_PLACEHOLDER",
+    "mongoDb": "mongodb://MONGO_APP_USER_PLACEHOLDER:MONGO_APP_PASSWORD_PLACEHOLDER@mongodb:27017/meshcentral",
+    "mongoDbName": "meshcentral",
+    "WANonly": true,
+    "sessionKey": "MESHCENTRAL_SESSION_KEY_PLACEHOLDER",
+    "dbEncryptKey": "MESHCENTRAL_DB_ENCRYPT_KEY_PLACEHOLDER",
+    "port": 443,
+    "aliasPort": 443,
+    "redirPort": 80,
+    "redirAliasPort": 80,
+    "AgentPong": 300,
+    "TLSOffload": false,
+    "SelfUpdate": false,
+    "AllowFraming": false,
+    "WebRTC": false,
+    "compression": true,
+    "wsCompression": true,
+    "agentWsCompression": true,
+    "StrictTransportSecurity": true,
+    "exactPorts": true,
+    "no2FactorAuth": false,
+    "log": "main,web,webrequest",
+    "authLog": "/opt/meshcentral/meshcentral-data/auth.log",
+    "maxInvalidLogin": {
+      "time": 10,
+      "count": 5,
+      "coolofftime": 30
+    },
+    "maxInvalid2fa": {
+      "time": 10,
+      "count": 5,
+      "coolofftime": 30
+    },
+    "autoBackup": {
+      "backupIntervalHours": 24,
+      "keepLastDaysBackup": 30,
+      "backupPath": "/opt/meshcentral/meshcentral-backups"
+    }
+  },
+  "domains": {
+    "": {
+      "title": "DFW MSP Remote Access",
+      "title2": "Backup System",
+      "minify": true,
+      "NewAccounts": false,
+      "localSessionRecording": true,
+      "allowedOrigin": false,
+      "agentInviteCodes": true,
+      "geoLocation": false,
+      "passwordRequirements": {
+        "min": 12,
+        "max": 128,
+        "upper": 1,
+        "lower": 1,
+        "numeric": 1,
+        "nonalpha": 1,
+        "reset": 90,
+        "force2factor": true,
+        "oldPasswordBan": 5,
+        "banCommonPasswords": true,
+        "twoFactorTimeout": 300
+      },
+      "twoFactorCookieDurationDays": 7,
+      "consentMessages": {
+        "title": "DFW MSP Remote Support",
+        "desktop": "{0} is starting a remote desktop session.",
+        "terminal": "{0} is starting a remote terminal session.",
+        "files": "{0} is starting a remote file access session.",
+        "consentTimeout": 30,
+        "autoAcceptOnTimeout": false,
+        "autoAcceptIfNoUser": true
+      },
+      "notificationMessages": {
+        "title": "DFW MSP Remote Support",
+        "desktop": "{0} started a remote desktop session.",
+        "terminal": "{0} started a remote terminal session.",
+        "files": "{0} started a remote files session."
+      },
+      "deviceMeshRouterLinks": {
+        "rdp": true,
+        "ssh": true,
+        "scp": true
+      },
+      "agentCustomization": {
+        "displayName": "DFW MSP Remote Agent",
+        "description": "DFW MSP backup remote access agent for IT support.",
+        "companyName": "DFW MSP",
+        "serviceName": "dfwmspagent"
+      },
+      "limits": {
+        "maxSingleUserSessions": 5
+      },
+      "sessionRecording": {
+        "onlySelectedDeviceGroups": false,
+        "filepath": "/opt/meshcentral/meshcentral-files/recordings",
+        "index": true,
+        "maxRecordingDays": 90,
+        "protocols": [1, 2, 5]
+      },
+      "userSessionIdleTimeout": 30,
+      "httpHeaders": {
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+        "X-XSS-Protection": "1; mode=block",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      }
+    }
+  }
+}

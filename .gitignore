@@ -313,3 +313,110 @@ __pycache__/
 docs/__pycache__/
 docs/env/
 docker-compose.yaml
+
+# =============================================================================
+# SECRETS AND SENSITIVE FILES - CRITICAL SECURITY
+# =============================================================================
+# DO NOT REMOVE THESE ENTRIES - Prevents secrets from leaking to public GitHub
+
+# Environment files (contain passwords, API keys, tokens)
+.env
+.env.*
+!.env.example
+*.env
+deploy/.env
+**/.env
+
+# Generated config files with secrets
+deploy/config.json
+!deploy/config.json.template
+**/config.json
+!**/config.json.template
+!docker/config.json.template
+
+# MongoDB initialization with credentials
+deploy/init-mongo.js
+
+# SSL/TLS Certificates and Keys
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+!*.pfx  # Already in original gitignore, kept for clarity
+*.jks
+*.keystore
+acme.json
+**/letsencrypt/
+**/certs/
+**/ssl/
+
+# Backup files (may contain database dumps with secrets)
+*.backup
+*.bak
+*.sql
+*.dump
+**/backups/
+**/meshcentral-backups/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+meshcentral.db
+meshcentral.db.json
+**/mongodb-data/
+**/mongo-data/
+
+# Session and authentication data
+*.session
+**/sessions/
+auth.log
+**/auth.log
+
+# Token files
+*.token
+*tokens*
+invite-codes.txt
+**/invite-codes/
+
+# MeshCentral specific sensitive files
+meshcentral-data/
+meshcentral-files/
+meshcentral-backups/
+**/meshcentral-data/
+**/meshcentral-files/
+
+# Docker volumes (if accidentally created locally)
+**/volumes/
+
+# Terraform state (if used for AWS deployment)
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
+
+# AWS credentials
+.aws/
+credentials
+aws-credentials*
+
+# Temporary files that might contain secrets
+*.tmp
+*.temp
+*.swp
+*~
+
+# IDE workspace files that might cache secrets
+.vscode/settings.json
+.idea/workspace.xml
+
+# Log files (may contain sensitive data)
+*.log
+logs/
+**/logs/
+
+# Secret scanning exceptions file
+.gitsecret

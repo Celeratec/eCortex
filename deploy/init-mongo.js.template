@@ -1,0 +1,17 @@
+// MongoDB initialization script template for MeshCentral
+// Copy to init-mongo.js and replace placeholders (done automatically by setup.sh)
+
+db = db.getSiblingDB('meshcentral');
+
+db.createUser({
+    user: 'MONGO_APP_USER_PLACEHOLDER',
+    pwd: 'MONGO_APP_PASSWORD_PLACEHOLDER',
+    roles: [
+        {
+            role: 'readWrite',
+            db: 'meshcentral'
+        }
+    ]
+});
+
+print('MeshCentral database user created successfully');

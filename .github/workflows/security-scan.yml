@@ -1,0 +1,144 @@
+# Security scanning workflow to prevent secret leakage
+# Runs on every push and PR to catch secrets before they reach main branch
+
+name: Security Scan
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['main', 'master']
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # =============================================================================
+  # Secret Detection with Gitleaks
+  # =============================================================================
+  gitleaks:
+    name: Detect Secrets (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # =============================================================================
+  # Secret Detection with TruffleHog
+  # =============================================================================
+  trufflehog:
+    name: Detect Secrets (TruffleHog)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+  # =============================================================================
+  # Custom Pattern Checks for MeshCentral
+  # =============================================================================
+  custom-checks:
+    name: MeshCentral Secret Patterns
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for .env files
+        run: |
+          echo "Checking for .env files..."
+          ENV_FILES=$(find . -name ".env" -o -name "*.env" | grep -v ".env.example" | grep -v "env.example" || true)
+          if [ -n "$ENV_FILES" ]; then
+            echo "❌ ERROR: Found .env files that should not be committed:"
+            echo "$ENV_FILES"
+            exit 1
+          fi
+          echo "✅ No .env files found"
+
+      - name: Check for hardcoded MongoDB credentials
+        run: |
+          echo "Checking for MongoDB credentials..."
+          # Look for mongodb:// with non-placeholder credentials
+          MONGO_CREDS=$(grep -rn "mongodb://[^P][^L]" --include="*.json" --include="*.js" --include="*.yml" --include="*.yaml" . | grep -v "PLACEHOLDER" | grep -v "template" | grep -v "example" | grep -v ".github" || true)
+          if [ -n "$MONGO_CREDS" ]; then
+            echo "❌ ERROR: Found potential MongoDB credentials:"
+            echo "$MONGO_CREDS"
+            exit 1
+          fi
+          echo "✅ No hardcoded MongoDB credentials found"
+
+      - name: Check for hardcoded session keys
+        run: |
+          echo "Checking for session keys..."
+          SESSION_KEYS=$(grep -rn "sessionKey.*[=:][\"'][A-Za-z0-9_-]\{20,\}" --include="*.json" --include="*.js" . | grep -v "PLACEHOLDER" | grep -v "template" | grep -v "example" || true)
+          if [ -n "$SESSION_KEYS" ]; then
+            echo "❌ ERROR: Found potential session keys:"
+            echo "$SESSION_KEYS"
+            exit 1
+          fi
+          echo "✅ No hardcoded session keys found"
+
+      - name: Check for MeshCentral invite tokens
+        run: |
+          echo "Checking for invite tokens..."
+          TOKENS=$(grep -rn "meshinstall=[A-Za-z0-9]\{10,\}" --include="*.ps1" --include="*.sh" --include="*.json" . | grep -v "PLACEHOLDER" | grep -v "example" | grep -v "template" || true)
+          if [ -n "$TOKENS" ]; then
+            echo "❌ ERROR: Found potential invite tokens:"
+            echo "$TOKENS"
+            exit 1
+          fi
+          echo "✅ No hardcoded invite tokens found"
+
+      - name: Check for private keys
+        run: |
+          echo "Checking for private keys..."
+          PRIVATE_KEYS=$(grep -rn "BEGIN.*PRIVATE KEY" . --include="*.pem" --include="*.key" --include="*.json" --include="*.js" || true)
+          if [ -n "$PRIVATE_KEYS" ]; then
+            echo "❌ ERROR: Found private key files:"
+            echo "$PRIVATE_KEYS"
+            exit 1
+          fi
+          echo "✅ No private keys found"
+
+      - name: Verify template files have placeholders
+        run: |
+          echo "Verifying template files..."
+          
+          # Check config.json.template
+          if [ -f "deploy/config.json.template" ]; then
+            if ! grep -q "PLACEHOLDER" deploy/config.json.template; then
+              echo "❌ ERROR: config.json.template is missing PLACEHOLDER values"
+              exit 1
+            fi
+            echo "✅ config.json.template has correct placeholders"
+          fi
+          
+          # Check init-mongo.js.template
+          if [ -f "deploy/init-mongo.js.template" ]; then
+            if ! grep -q "PLACEHOLDER" deploy/init-mongo.js.template; then
+              echo "❌ ERROR: init-mongo.js.template is missing PLACEHOLDER values"
+              exit 1
+            fi
+            echo "✅ init-mongo.js.template has correct placeholders"
+          fi
+
+      - name: Summary
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "✅ All security checks passed!"
+          echo "=========================================="

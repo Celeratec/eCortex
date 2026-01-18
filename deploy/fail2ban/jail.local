@@ -1,0 +1,45 @@
+# Fail2ban configuration for MeshCentral
+# Protects against brute force login attempts
+
+[DEFAULT]
+# Ban duration (10 minutes default, increase for repeat offenders)
+bantime = 10m
+# Time window to count failures
+findtime = 10m
+# Max failures before ban
+maxretry = 5
+# Action to take - iptables ban
+banaction = iptables-multiport
+# Backend
+backend = auto
+
+# =============================================================================
+# TRAEFIK ACCESS LOG MONITORING
+# =============================================================================
+[traefik-auth]
+enabled = true
+filter = traefik-auth
+logpath = /var/log/traefik/access.log
+maxretry = 5
+findtime = 10m
+bantime = 30m
+
+# =============================================================================
+# MESHCENTRAL SPECIFIC
+# =============================================================================
+[meshcentral-auth]
+enabled = true
+filter = meshcentral-auth
+logpath = /var/log/traefik/access.log
+maxretry = 5
+findtime = 10m
+bantime = 1h
+
+# Repeat offenders get longer bans
+[recidive]
+enabled = true
+filter = recidive
+logpath = /var/log/fail2ban.log
+bantime = 1w
+findtime = 1d
+maxretry = 3

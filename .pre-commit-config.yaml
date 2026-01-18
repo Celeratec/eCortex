@@ -1,0 +1,62 @@
+# Pre-commit hooks to prevent secrets from being committed
+# Install: pip install pre-commit && pre-commit install
+# See: https://pre-commit.com/
+
+repos:
+  # Detect secrets before commit
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            .*\.lock|
+            .*-lock\.json|
+            package-lock\.json|
+            \.secrets\.baseline
+          )$
+
+  # Git secrets (AWS focused but catches general patterns)
+  - repo: https://github.com/awslabs/git-secrets
+    rev: master
+    hooks:
+      - id: git-secrets
+        entry: git-secrets --scan
+        language: script
+        
+  # Gitleaks - comprehensive secret scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+        
+  # Check for large files that might contain database dumps
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key
+      
+  # Custom patterns for MeshCentral
+  - repo: local
+    hooks:
+      - id: no-env-files
+        name: Prevent .env files
+        entry: "Found .env file - secrets should not be committed"
+        language: fail
+        files: '^(?!.*\.example$).*\.env$'
+        
+      - id: no-hardcoded-tokens
+        name: Check for hardcoded tokens
+        entry: bash -c 'grep -rn "meshinstall=" --include="*.ps1" --include="*.sh" --include="*.json" | grep -v "PLACEHOLDER" | grep -v "example" | grep -v "template" && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+        
+      - id: no-mongodb-credentials
+        name: Check for MongoDB credentials
+        entry: bash -c 'grep -rn "mongodb://[^P][^L]" --include="*.json" --include="*.js" --include="*.yml" | grep -v "PLACEHOLDER" | grep -v "template" && exit 1 || exit 0'
+        language: system
+        pass_filenames: false

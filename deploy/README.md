@@ -1,0 +1,124 @@
+# MeshCentral Deployment - DFW MSP Backup Remote Access
+
+Production deployment files for MeshCentral as a backup remote access system, deployed and managed via NinjaOne.
+
+## 📋 Overview
+
+MeshCentral serves as a **secondary, technician-initiated fallback** when:
+- NinjaRemote fails
+- RDP is blocked
+- RustDesk is unavailable
+- Browser-only emergency access is required
+
+**MeshCentral does NOT replace NinjaOne** - NinjaOne remains the system of record.
+
+## 📁 Directory Structure
+
+```
+deploy/
+├── docker-compose.yml          # Production container orchestration
+├── config.json                 # MeshCentral server configuration
+├── env.example                 # Environment variables template
+├── setup.sh                    # Automated setup script
+├── init-mongo.js               # MongoDB initialization
+├── fail2ban/
+│   ├── jail.local              # Fail2ban configuration
+│   └── filter.d/
+│       ├── traefik-auth.conf   # Auth failure detection
+│       └── meshcentral-auth.conf
+├── ninjaone-scripts/
+│   ├── Install-MeshAgent-Windows.ps1   # Windows agent deployment
+│   ├── Install-MeshAgent-macOS.sh      # macOS agent deployment
+│   ├── Validate-MeshAgent.ps1          # Health check script
+│   └── Uninstall-MeshAgent.ps1         # Agent removal
+└── docs/
+    ├── meshcentral-deploy.md   # Server deployment guide
+    └── ninja-meshcentral.md    # NinjaOne integration guide
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Ubuntu 22.04 LTS server
+- Docker & Docker Compose V2
+- DNS pointing `mesh.dfwmsp.com` to server IP
+- Ports 80 and 443 open
+
+### Deploy
+
+```bash
+# Clone repository
+git clone https://github.com/dfwmsp/eMeshCentral.git
+cd eMeshCentral/deploy
+
+# Run setup (generates secrets)
+chmod +x setup.sh
+sudo ./setup.sh
+
+# Edit configuration
+sudo nano .env   # Set MESHCENTRAL_HOSTNAME and ACME_EMAIL
+
+# Start services
+docker compose up -d
+
+# View logs
+docker compose logs -f
+```
+
+### Post-Deployment
+
+1. Access `https://mesh.dfwmsp.com`
+2. Create admin account (first user)
+3. **Enable MFA immediately**
+4. Create device groups per client
+5. Generate deployment tokens for NinjaOne
+
+## 🔒 Security Features
+
+| Feature | Implementation |
+|---------|---------------|
+| TLS | Traefik + Let's Encrypt |
+| MFA | Mandatory (`force2factor: true`) |
+| Rate Limiting | Traefik + MeshCentral |
+| Brute Force Protection | Fail2ban |
+| Audit Logging | `authLog` enabled |
+| Session Timeout | 30 min idle |
+| Password Policy | 12+ chars, complexity, history |
+
+## 📝 No Hardcoded Secrets
+
+All sensitive values are:
+- ✅ Generated at deployment time by `setup.sh`
+- ✅ Stored in `.env` (gitignored)
+- ✅ Injected via NinjaOne secure variables
+- ❌ Never committed to repository
+
+## 📖 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [docs/meshcentral-deploy.md](docs/meshcentral-deploy.md) | Server deployment & administration |
+| [docs/ninja-meshcentral.md](docs/ninja-meshcentral.md) | NinjaOne integration & workflows |
+
+## 🔄 Token Rotation
+
+Agent deployment tokens should be rotated:
+- **Monthly**: Standard rotation
+- **Immediately**: On suspected compromise
+- **On termination**: When staff leave
+
+## ✅ Definition of Done
+
+- [x] Server survives restart without data loss
+- [x] Agents reconnect automatically
+- [x] Technicians authenticate with MFA
+- [x] NinjaOne can deploy agents silently
+- [x] Technicians can reach endpoints when NinjaRemote fails
+- [x] No secrets in public repositories
+
+## 📞 Support
+
+For issues with this deployment:
+1. Check [troubleshooting docs](docs/meshcentral-deploy.md#troubleshooting)
+2. Review container logs: `docker compose logs`
+3. Check [MeshCentral official docs](https://meshcentral.com/docs/)
