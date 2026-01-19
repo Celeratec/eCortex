@@ -41,7 +41,7 @@ deploy/
 ### Prerequisites
 - Ubuntu 22.04 LTS server
 - Docker & Docker Compose V2
-- DNS pointing `mesh.dfwmsp.com` to server IP
+- DNS pointing `mesh.cortalis.com` to server IP
 - Ports 80 and 443 open
 
 ### Deploy
@@ -67,7 +67,7 @@ docker compose logs -f
 
 ### Post-Deployment
 
-1. Access `https://mesh.dfwmsp.com`
+1. Access `https://mesh.cortalis.com`
 2. Create admin account (first user)
 3. **Enable MFA immediately**
 4. Create device groups per client
@@ -121,3 +121,9 @@ Agent deployment tokens should be rotated:
 For issues with this deployment:
 1. Check [troubleshooting docs](docs/ecortex-deploy.md#troubleshooting)
 2. Review container logs: `docker compose logs`
+
+---
+
+## License
+
+eCortex is based on [MeshCentral](https://github.com/Ylianst/MeshCentral) and licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0).

@@ -44,7 +44,7 @@ Additional protection via git-secrets:
 brew install git-secrets
 
 # Configure for this repo
-cd /path/to/eMeshCentral
+cd /path/to/eCortex
 git secrets --install
 git secrets --register-aws
 
@@ -103,7 +103,7 @@ git push --force
 
 ## Deployment Security
 
-When deploying MeshCentral:
+When deploying eCortex:
 
 1. Generate all secrets using `setup.sh` (never use defaults)
 2. Store `.env` securely on the server (mode 600)

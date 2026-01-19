@@ -1,82 +1,131 @@
-# MeshCentral
+# eCortex
 
-## Table of Contents
+**Cortalis Backup Remote Access System**
 
-[About](#about)
-[Social Media](#social-media)
-[Documentation](#documentation)
-[Video Tutorials](#video-tutorials)
-[Community Meetings](#community-meetings)
-[Feedback](#feedback)
-[Unofficial Chatrooms](#unofficial-chatrooms)
-[Archive PDFs](#archive-pdfs)
-[License](#license)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## About
-MeshCentral is a full computer management web site. With MeshCentral, you can run your own web server to remotely manage and control computers on a local network or anywhere on the internet. Once you get the server started, create device group and download and install an agent on each computer you want to manage. A minute later, the new computer will show up on the web site and you can take control of it. MeshCentral includes full web-based remote desktop, terminal and file management capability.
 
-For more information, [visit MeshCentral.com](https://meshcentral.com).
+eCortex is Cortalis's customized deployment of MeshCentral, providing a self-hosted backup remote access system for IT technicians. It serves as a secondary fallback when primary remote tools (NinjaRemote, RDP, RustDesk) are unavailable.
 
-## Social Media
-[YouTube](https://www.youtube.com/channel/UCJWz607A8EVlkilzcrb-GKg/videos)
-[Reddit](https://www.reddit.com/r/MeshCentral/)
-[BlogSpot](https://meshcentral2.blogspot.com/)
-[LinkedIn](https://www.linkedin.com/groups/13067101/)
+### Key Features
+
+- 🖥️ **Browser-based remote desktop** - No client software required
+- 🔒 **Mandatory MFA** - All technician accounts require two-factor authentication
+- 📁 **File transfer** - Upload/download files securely
+- ⌨️ **Remote terminal** - Command line access to endpoints
+- 🔐 **No hardcoded secrets** - All credentials generated at deployment
+- 🚀 **NinjaOne integration** - Deploy agents via existing RMM policies
+
+### When to Use eCortex
+
+| Scenario | Primary Tool | eCortex |
+|----------|-------------|---------|
+| Remote Desktop | NinjaRemote | ✅ Backup |
+| RDP Blocked | RDP | ✅ Alternative |
+| RustDesk Down | eRemote | ✅ Fallback |
+| Browser-Only | N/A | ✅ Primary |
+
+**eCortex does NOT replace NinjaOne** - NinjaOne remains the system of record.
+
+---
+
+## Quick Start
+
+### Deploy the Server
+
+```bash
+git clone https://github.com/Celeratec/eCortex.git
+cd eCortex/deploy
+chmod +x setup.sh
+sudo ./setup.sh
+docker compose up -d
+```
+
+### Access eCortex
+
+Open: `https://mesh.cortalis.com`
+
+See [deploy/docs/ecortex-deploy.md](deploy/docs/ecortex-deploy.md) for complete deployment instructions.
+
+---
 
 ## Documentation
-[New Searchable Documentation](https://ylianst.github.io/MeshCentral/) is available here and contains information every administrator should know including usage, the server configuration file, databases, TLS offloading, Let's Encrypt, IP Filtering, Email setup, embedding, server port aliasing, reverse proxy setup, multi factor authentication, branding & terms of use, HashiCorp Vault support, and SSO.
 
-The [Design and Architecture Guide](https://meshcentral.com/docs/MeshCentral2DesignArchitecture.pdf) is a short document that includes information on the design overview, dependencies, source code descriptions of each file, certificates, TLS security, the agent to server handshake, browser to agent relay and WebRTC and the messenger service.
+| Document | Description |
+|----------|-------------|
+| [Server Deployment Guide](deploy/docs/ecortex-deploy.md) | Installing and configuring the eCortex server |
+| [NinjaOne Integration](deploy/docs/ecortex-ninjaone.md) | Deploying agents via NinjaOne policies |
+| [Technician Quick Start](deploy/docs/technician-quickstart.md) | How technicians use eCortex |
 
-## Video Tutorials
-You can watch many tutorial videos on the [MeshCentral YouTube Channel](https://www.youtube.com/channel/UCJWz607A8EVlkilzcrb-GKg/videos). Two videos to get started involve installation and basic usages.
+---
 
-Installing MeshCentral on Windows, Linux and macOS.  
-[![MeshCentral - Installation](https://img.youtube.com/vi/GsQbWZmRRAU/mqdefault.jpg)](https://www.youtube.com/watch?v=GsQbWZmRRAU)
+## Architecture
 
-Basic Usages including installing the agent and remote desktop, terminal and file access.  
-[![MeshCentral - Basics](https://img.youtube.com/vi/D9Q7M7PdTg0/mqdefault.jpg)](https://www.youtube.com/watch?v=D9Q7M7PdTg0)
+```
+Technician (Browser)
+       |
+       | HTTPS (443)
+       ↓
+   [Traefik] ─── TLS/Let's Encrypt
+       |
+   [eCortex Server]
+       |
+   [MongoDB]
 
-MeshCentral support for two-factor authentication.  
-[![MeshCentral - Two Factor Authentication](https://img.youtube.com/vi/luLZKcma9l0/mqdefault.jpg)](https://www.youtube.com/watch?v=luLZKcma9l0)
+       ⇅ Outbound TLS (443)
 
-How to setup MeshCentral with the NGINX reverse proxy.  
-[![MeshCentral - NGINX Reverse Proxy](https://img.youtube.com/vi/YSmiLyKSX2I/mqdefault.jpg)](https://www.youtube.com/watch?v=YSmiLyKSX2I)
+   [eCortex Agent on Endpoints]
+```
 
-Installing and using the MeshCentral Android agent.  
-[![MeshCentral - Android](https://img.youtube.com/vi/wi1HYdW00Bk/mqdefault.jpg)](https://www.youtube.com/watch?v=wi1HYdW00Bk)
+- **No inbound ports required** on endpoints
+- Agents connect outbound to the eCortex server
+- All traffic encrypted with TLS
 
-Using MeshCentral Router to port map TCP connections.  
-[![MeshCentral - Basics](https://img.youtube.com/vi/BubeVRmbCRM/mqdefault.jpg)](https://www.youtube.com/watch?v=BubeVRmbCRM)
+---
 
-## Community Meetings
-Join our monthly community meetings to stay updated with the latest MeshCentral developments, ask questions, and connect with other users and developers.
+## Security
 
-- [Watch past meeting recordings](https://videos.evoludata.com/w/p/tUnLpw6z1LCASuATa7wnCo)
-- [Learn more about our monthly meetings](https://github.com/Ylianst/MeshCentral/wiki/Community-Monthly-Meetings)
+| Feature | Implementation |
+|---------|----------------|
+| TLS | Traefik + Let's Encrypt |
+| MFA | Mandatory for all users |
+| Rate Limiting | Login attempt throttling |
+| Brute Force | Fail2ban integration |
+| Audit Logging | All sessions logged |
+| Session Timeout | 30 minute idle disconnect |
+| Password Policy | 12+ chars, complexity enforced |
 
-## Feedback
-If you encounter a problem or have a suggestion to improve the product, you may file an [issue report](https://github.com/Ylianst/MeshCentral/issues/)
+---
 
-If you are filing a problem report, you should include:
-* The version of the software you are using
-* The operating system and version
-* The observed output
-* The expected output
-* Any troubleshooting you took to resolve the issue yourself
-* Any other similar reports
+## Repository Structure
 
-If you are having issues with the following other products, you should file a report on their respective issue pages
-[MeshAgent](https://github.com/Ylianst/MeshAgent/issues)
-[MeshRouter](https://github.com/Ylianst/MeshCentralRouter/issues)
+```
+eCortex/
+├── deploy/                  # Production deployment files
+│   ├── docker-compose.yml   # Container orchestration
+│   ├── setup.sh             # Automated setup
+│   ├── ninjaone-scripts/    # Agent deployment scripts
+│   └── docs/                # Deployment documentation
+├── agents/                  # Agent binaries and scripts
+├── public/                  # Web interface assets
+├── views/                   # Handlebars templates
+└── [core modules]           # Server-side JavaScript
+```
 
-## Unofficial chatrooms
-- Discord Server: https://discord.gg/8wHC6ASWAc
-- Telegram Channel: https://t.me/meshcentral
+---
 
-## Archive PDFs
-[User's Guide](https://meshcentral.com/docs/MeshCentral2UserGuide.pdf)
-[Installation Guide](https://meshcentral.com/docs/MeshCentral2InstallGuide.pdf)
+## Based On
+
+eCortex is a customized fork of [MeshCentral](https://github.com/Ylianst/MeshCentral), an open-source remote management platform.
+
+- **Upstream**: [Ylianst/MeshCentral](https://github.com/Ylianst/MeshCentral)
+- **Documentation**: [meshcentral.com/docs](https://meshcentral.com/docs/)
+
+---
 
 ## License
+
 This software is licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+eCortex is based on MeshCentral by Ylian Saint-Hilaire.
