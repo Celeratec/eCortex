@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   # =============================================================================
-  # Secret Detection with Gitleaks
+  # Secret Detection with Gitleaks (CLI - free for all repos)
   # =============================================================================
   gitleaks:
     name: Detect Secrets (Gitleaks)
@@ -26,10 +26,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Gitleaks
+        run: |
+          # Install gitleaks CLI (free, no license required)
+          GITLEAKS_VERSION="8.18.4"
+          wget -q "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gitleaks detect --source . --verbose --redact --exit-code 1
 
   # =============================================================================
   # Secret Detection with TruffleHog
@@ -49,10 +57,10 @@ jobs:
           extra_args: --only-verified
 
   # =============================================================================
-  # Custom Pattern Checks for MeshCentral
+  # Custom Pattern Checks for eCortex
   # =============================================================================
   custom-checks:
-    name: MeshCentral Secret Patterns
+    name: eCortex Secret Patterns
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,9 +100,10 @@ jobs:
           fi
           echo "✅ No hardcoded session keys found"
 
-      - name: Check for MeshCentral invite tokens
+      - name: Check for eCortex/MeshCentral invite tokens
         run: |
           echo "Checking for invite tokens..."
+          # Check for both meshcentral:// and ecortex:// style tokens
           TOKENS=$(grep -rn "meshinstall=[A-Za-z0-9]\{10,\}" --include="*.ps1" --include="*.sh" --include="*.json" . | grep -v "PLACEHOLDER" | grep -v "example" | grep -v "template" || true)
           if [ -n "$TOKENS" ]; then
             echo "❌ ERROR: Found potential invite tokens:"
