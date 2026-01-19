@@ -1,0 +1,63 @@
+# Cursor AI Rules for eMeshCentral Deployment
+
+## CRITICAL - DO NOT MODIFY
+
+These files and configurations are PRODUCTION-CRITICAL and must be preserved:
+
+### 1. deploy/traefik/config.yml
+- **Status:** REQUIRED for production
+- **Purpose:** Defines Traefik v3 middlewares and backend TLS configuration
+- **DO NOT:** Remove `insecureSkipVerify` setting (required for MeshCentral backend)
+- **DO NOT:** Add CORS middleware (incompatible with Traefik v3)
+
+### 2. deploy/docker-compose.yml - Traefik Service
+**Required configurations:**
+```yaml
+# In command section:
+- "--providers.file.directory=/etc/traefik/config"
+- "--providers.file.watch=true"
+
+# In volumes section:
+- ./traefik/config.yml:/etc/traefik/config/config.yml:ro
+```
+
+### 3. deploy/docker-compose.yml - MeshCentral Service
+**Required labels:**
+```yaml
+- "traefik.http.routers.meshcentral.middlewares=security-headers@file"
+- "traefik.http.services.meshcentral.loadbalancer.serversTransport=insecure@file"
+```
+
+## Why These Are Critical
+
+1. **security-headers@file**: References middleware defined in config.yml
+   - Without: "middleware does not exist" error → 404 errors
+   
+2. **serversTransport=insecure@file**: Skips TLS verification for backend
+   - Without: Certificate validation errors → 500 errors
+   - Reason: MeshCentral cert is for 127.0.0.1, not container IP
+
+3. **File provider config**: Enables Traefik to load config.yml
+   - Without: All @file middleware references fail
+
+## Safe to Modify
+
+- Environment variables in .env file
+- MongoDB configuration (within reason)
+- Fail2ban rules
+- Log levels
+- Port mappings (with caution)
+
+## When Updating
+
+1. Always test in staging/dev first
+2. Check Traefik logs: `docker logs meshcentral-traefik --tail 50`
+3. Verify website responds: `curl -I https://ecortex.cortalis.com`
+4. Look for these errors:
+   - "middleware does not exist"
+   - "failed to verify certificate"
+   - "field not found, node: cors"
+
+## See Also
+
+- `deploy/DEPLOYMENT-CHANGES.md` - Full documentation of production changes

@@ -20,6 +20,8 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=meshcentral-network"
+      - "--providers.file.directory=/etc/traefik/config"
+      - "--providers.file.watch=true"
       # Entrypoints
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
@@ -41,6 +43,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-letsencrypt:/letsencrypt
       - traefik-logs:/var/log/traefik
+      - ./traefik/config.yml:/etc/traefik/config/config.yml:ro
     networks:
       - meshcentral-network
     labels:
@@ -130,11 +133,12 @@ services:
       - "traefik.http.routers.meshcentral.rule=Host(`${MESHCENTRAL_HOSTNAME}`)"
       - "traefik.http.routers.meshcentral.entrypoints=websecure"
       - "traefik.http.routers.meshcentral.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.meshcentral.middlewares=security-headers,ratelimit"
+      - "traefik.http.routers.meshcentral.middlewares=security-headers@file"
       - "traefik.http.services.meshcentral.loadbalancer.server.port=443"
       - "traefik.http.services.meshcentral.loadbalancer.server.scheme=https"
       - "traefik.http.routers.meshcentral.service=meshcentral"
       - "traefik.http.services.meshcentral.loadbalancer.passHostHeader=true"
+      - "traefik.http.services.meshcentral.loadbalancer.serversTransport=insecure@file"
     healthcheck:
       test: ["CMD", "curl", "-fk", "https://localhost:443/"]
       interval: 60s
