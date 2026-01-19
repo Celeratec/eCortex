@@ -1,0 +1,39 @@
+# Traefik File Provider Configuration
+# Required for Traefik v3 compatibility and internal TLS handling
+#
+# This file defines middlewares and server transports that are used
+# across the deployment. Referenced with @file suffix in Docker labels.
+
+http:
+  middlewares:
+    # Security headers middleware
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        forceSTSHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "DENY"
+        customBrowserXssValue: "1; mode=block"
+        permissionsPolicy: "geolocation=(), microphone=(), camera=()"
+
+    # Rate limiting middleware
+    ratelimit:
+      rateLimit:
+        average: 100
+        period: 60s
+        burst: 50
+
+    # Compression middleware
+    compression:
+      compress:
+        minResponseBodyBytes: 1024
+
+  # Server transports for backend connections
+  serversTransports:
+    # Required for MeshCentral - its internal cert is only valid for 127.0.0.1
+    # Without this, Traefik fails TLS verification to Docker container IPs
+    insecure:
+      insecureSkipVerify: true
