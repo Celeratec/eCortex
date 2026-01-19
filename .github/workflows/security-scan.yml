@@ -23,8 +23,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        # No fetch-depth: 0 - we only need current files, not history
 
       - name: Install Gitleaks
         run: |
@@ -38,11 +37,13 @@ jobs:
       - name: Run Gitleaks on deploy directory
         run: |
           # Only scan the deploy/ directory - this contains our custom configs
-          # Upstream MeshCentral files are open source and contain sample/placeholder values
+          # Use --no-git to scan current files only (not git history)
+          # Upstream MeshCentral git history contains many false positives
           echo "Scanning deploy/ directory for secrets..."
           gitleaks detect \
             --source ./deploy \
             --config .gitleaks.toml \
+            --no-git \
             --verbose \
             --redact \
             --exit-code 1
@@ -50,11 +51,12 @@ jobs:
       
       - name: Run Gitleaks on workflow files
         run: |
-          # Also scan our CI/CD configs
+          # Also scan our CI/CD configs (current files only)
           echo "Scanning .github/ directory for secrets..."
           gitleaks detect \
             --source ./.github \
             --config .gitleaks.toml \
+            --no-git \
             --verbose \
             --redact \
             --exit-code 1
