@@ -136,12 +136,12 @@ services:
       - "traefik.http.routers.meshcentral.entrypoints=websecure"
       - "traefik.http.routers.meshcentral.tls.certresolver=letsencrypt"
       - "traefik.http.routers.meshcentral.middlewares=security-headers@file"
-      - "traefik.http.services.meshcentral.loadbalancer.server.port=443"
+      - "traefik.http.services.meshcentral.loadbalancer.server.port=8080"
       - "traefik.http.services.meshcentral.loadbalancer.server.scheme=http"
       - "traefik.http.routers.meshcentral.service=meshcentral"
       - "traefik.http.services.meshcentral.loadbalancer.passHostHeader=true"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:443/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 60s
       timeout: 10s
       retries: 3

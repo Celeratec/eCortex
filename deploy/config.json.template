@@ -9,7 +9,7 @@
     "WANonly": true,
     "sessionKey": "MESHCENTRAL_SESSION_KEY_PLACEHOLDER",
     "dbEncryptKey": "MESHCENTRAL_DB_ENCRYPT_KEY_PLACEHOLDER",
-    "port": 443,
+    "port": 8080,
     "aliasPort": 443,
     "redirPort": 80,
     "redirAliasPort": 80,
